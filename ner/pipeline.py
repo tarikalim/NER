@@ -1,10 +1,9 @@
 import json
 from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
 
-# Paths for the trained model and tokenizer
 MODEL_DIR = "./trained_model"
-INPUT_FILE = "input_sentences.txt"  # File containing input sentences (one sentence per line)
-OUTPUT_FILE = "annotated_outputs.json"  # File to save annotated outputs
+INPUT_FILE = "input.txt"  # File containing input sentences (one sentence per line!)
+OUTPUT_FILE = "output.json"
 
 # Load the trained model and tokenizer
 tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR)
@@ -13,11 +12,11 @@ model = AutoModelForTokenClassification.from_pretrained(MODEL_DIR)
 # Initialize the pipeline for token classification
 nlp = pipeline("token-classification", model=model, tokenizer=tokenizer, aggregation_strategy="simple")
 
-# Read input sentences from the file
+# Read input sentences from the file without specifying encoding to utf-8,
+# we got an error on windows10 even default encoding set to utf-8.
 with open(INPUT_FILE, "r", encoding="utf-8") as f:
     sentences = [line.strip() for line in f if line.strip()]
 
-# Annotate sentences
 outputs = []
 for sentence in sentences:
     annotations = nlp(sentence)
@@ -28,7 +27,6 @@ for sentence in sentences:
     ]
     outputs.append({"sentence": sentence, "annotations": clean_annotations})
 
-# Save outputs to a JSON file
 with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
     json.dump(outputs, f, ensure_ascii=False, indent=4)
 

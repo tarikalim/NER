@@ -1,5 +1,6 @@
 import json
-import os
+from datasets import Dataset
+from sklearn.model_selection import train_test_split
 from transformers import (
     AutoTokenizer,
     AutoModelForTokenClassification,
@@ -7,12 +8,8 @@ from transformers import (
     Trainer,
     DataCollatorForTokenClassification,
 )
-from datasets import Dataset, DatasetDict
-from sklearn.model_selection import train_test_split
+import torch
 
-os.environ["WANDB_DISABLED"] = "true"
-
-# Constants
 MODEL_NAME = "bert-base-uncased"
 OUTPUT_DIR = "./trained_model"
 NUM_EPOCHS = 5
@@ -20,15 +17,20 @@ BATCH_SIZE = 8
 LEARNING_RATE = 5e-5
 
 LABEL_LIST = [
-    "O",  # None
+    "O",
     "B-PER", "I-PER",  # Person
     "B-LOC", "I-LOC",  # Location
     "B-ORG", "I-ORG",  # Organization
     "B-TIME", "I-TIME",  # Time
-    "B-CUR", "I-CUR"  # Currency
+    "B-CUR", "I-CUR",  # Currency
+    "B-MISC", "I-MISC"  # Other
 ]
 NUM_LABELS = len(LABEL_LIST)
 label_map = {label: i for i, label in enumerate(LABEL_LIST)}
+
+# Check device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Training will be performed on: {device}")
 
 
 # Load datasets
@@ -39,9 +41,7 @@ def load_ner_dataset(file_path):
     for entry in data:
         tokens = [token["token"] for token in entry["tokens"]]
         ner_tags = [token["tag"] for token in entry["tokens"]]
-        if len(tokens) == len(ner_tags):
-            ner_tags = [tag if tag in LABEL_LIST else "O" for tag in ner_tags]
-            cleaned_data.append({"tokens": tokens, "ner_tags": ner_tags})
+        cleaned_data.append({"tokens": tokens, "ner_tags": ner_tags})
     return cleaned_data
 
 
@@ -49,20 +49,21 @@ def load_ner_dataset(file_path):
 dataset_path = "dataset/dataset.json"
 data = load_ner_dataset(dataset_path)
 
-# Split dataset into train and validation
+# Split dataset into train and validation,
+# 80% of data will be used for train and 20% of data will be used for validation.
 train_data, val_data = train_test_split(data, test_size=0.2, random_state=42)
+
+# Convert  data to hugging face format.
 train_dataset = Dataset.from_list(train_data)
 val_dataset = Dataset.from_list(val_data)
 
-# Tokenizer
+# Tokenizer for bert
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 
-# Tokenization and label alignment
+# Tokenization and label alignment (for validation and train data)
 def tokenize_and_align_labels(batch):
-    tokenized_inputs = tokenizer(
-        batch["tokens"], truncation=True, is_split_into_words=True, padding="max_length"
-    )
+    tokenized_inputs = tokenizer(batch["tokens"], truncation=True, is_split_into_words=True, padding="max_length")
     labels = []
     for i, label in enumerate(batch["ner_tags"]):
         word_ids = tokenized_inputs.word_ids(batch_index=i)
@@ -83,11 +84,8 @@ def tokenize_and_align_labels(batch):
 tokenized_train_dataset = train_dataset.map(tokenize_and_align_labels, batched=True)
 tokenized_val_dataset = val_dataset.map(tokenize_and_align_labels, batched=True)
 
-# Combine datasets
-dataset = DatasetDict({"train": tokenized_train_dataset, "validation": tokenized_val_dataset})
-
-# Model
-model = AutoModelForTokenClassification.from_pretrained(MODEL_NAME, num_labels=NUM_LABELS).to("cuda")
+# code to train model
+model = AutoModelForTokenClassification.from_pretrained(MODEL_NAME, num_labels=NUM_LABELS)
 
 # Training arguments
 training_args = TrainingArguments(
@@ -99,25 +97,21 @@ training_args = TrainingArguments(
     num_train_epochs=NUM_EPOCHS,
     weight_decay=0.01,
     save_strategy="epoch",
-    logging_dir='./logs',
-    logging_steps=10,
     report_to=None,
 )
 
-# Data collator
 data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
 # Trainer
 trainer = Trainer(
     model=model,
     args=training_args,
-    train_dataset=dataset["train"],
-    eval_dataset=dataset["validation"],
+    train_dataset=tokenized_train_dataset,
+    eval_dataset=tokenized_val_dataset,
     data_collator=data_collator,
     tokenizer=tokenizer
 )
 
-# Train the model
 trainer.train()
 
 # Save the model
