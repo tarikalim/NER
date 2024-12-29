@@ -3,8 +3,6 @@
 ## Project Summary
 
 This project trains a **BERT model** for Named Entity Recognition (NER) using a dataset generated in NLP lecture project
-1. The model is trained and evaluated using our pipeline, and the trained model is later used for inference on input
-sentences provided in a text file.
 
 ---
 
@@ -31,9 +29,8 @@ Run the script to train the model and execute the pipeline:
 ## Important Note
 
 - The model is trained on **GPU**, you must specify the pytorch version according to your system,
-requirements.txt file doesn't include pytorch file!
-- For CUDA 12.1 related command is:
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+  requirements.txt file doesn't include pytorch file! When you run the script, it will ask you the cuda version
+
 ---
 
 ## Input and Output
@@ -63,31 +60,3 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 
 ---
 
-### Example Workflow
-
-1. Edit `input.txt` if you want to change example sentences:
-   ```
-   John lives in New York.
-   The Eiffel Tower is in Paris.
-   ```
-2. Run the script:
-   ```bash
-   ./setup_and_run.sh
-   ```
-3. Check the `output.json` file for results.
-
----
-
-## Directory Structure
-
-```
-.
-├── ner
-│   ├── dataset
-│   │   └── dataset.json      # Custom NER dataset
-│   ├── train.py              # Training script
-│   ├── pipeline.py           # Pipeline script for inference
-│   ├── input.txt             # Input sentences for NER
-│   ├── output.json           # Model's NER predictions
-├── requirements.txt          # Required Python libraries
-└── setup_and_run.sh          # Main script to train and run the project
