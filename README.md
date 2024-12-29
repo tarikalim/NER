@@ -30,13 +30,10 @@ Run the script to train the model and execute the pipeline:
 
 ## Important Note
 
-- The model is trained on **GPU**, and the following libraries in the `requirements.txt` file must be compatible with
-  your system:
-    - `torch==2.5.1+cu121`
-    - `torchvision==0.20.1+cu121`
-    - `torchaudio==2.5.1+cu121`
-- Ensure your system has a compatible **CUDA 12.1** environment for GPU acceleration.
-
+- The model is trained on **GPU**, you must specify the pytorch version according to your system,
+requirements.txt file doesn't include pytorch file!
+- For CUDA 12.1 related command is:
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 ---
 
 ## Input and Output
