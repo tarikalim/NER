@@ -1,9 +1,14 @@
-from transformers import AutoTokenizer, AutoModelForTokenClassification, TrainingArguments, Trainer
-from datasets import Dataset, DatasetDict
 import json
 import os
-from transformers import DataCollatorForTokenClassification
-
+from transformers import (
+    AutoTokenizer,
+    AutoModelForTokenClassification,
+    TrainingArguments,
+    Trainer,
+    DataCollatorForTokenClassification,
+)
+from datasets import Dataset, DatasetDict
+from sklearn.model_selection import train_test_split
 
 os.environ["WANDB_DISABLED"] = "true"
 
@@ -14,7 +19,6 @@ NUM_EPOCHS = 5
 BATCH_SIZE = 8
 LEARNING_RATE = 5e-5
 
-# Updated LABEL_LIST
 LABEL_LIST = [
     "O",  # None
     "B-PER", "I-PER",  # Person
@@ -24,47 +28,41 @@ LABEL_LIST = [
     "B-CUR", "I-CUR"  # Currency
 ]
 NUM_LABELS = len(LABEL_LIST)
+label_map = {label: i for i, label in enumerate(LABEL_LIST)}
 
 
 # Load datasets
 def load_ner_dataset(file_path):
-    """Load and clean dataset from a JSON file in NER format"""
     with open(file_path, "r", encoding="utf-8") as f:
         data = json.load(f)
-
     cleaned_data = []
     for entry in data:
-        tokens = entry.get("tokens", [])
-        ner_tags = entry.get("ner_tags", [])
-        # Ensure tokens and tags have the same length
+        tokens = [token["token"] for token in entry["tokens"]]
+        ner_tags = [token["tag"] for token in entry["tokens"]]
         if len(tokens) == len(ner_tags):
-            # Replace invalid tags with "O"
             ner_tags = [tag if tag in LABEL_LIST else "O" for tag in ner_tags]
             cleaned_data.append({"tokens": tokens, "ner_tags": ner_tags})
     return cleaned_data
 
 
 # Paths to datasets
-einstein_dataset_path = "fixed_einstein_cot.json"
-gpt_dataset_path = "einstein_cot.json"
+dataset_path = "dataset/dataset.json"
+data = load_ner_dataset(dataset_path)
 
-# Load datasets
-einstein_data = load_ner_dataset(einstein_dataset_path)
-gpt_data = load_ner_dataset(gpt_dataset_path)
-
-# Convert to Hugging Face Dataset format
-einstein_dataset = Dataset.from_list(einstein_data)
-gpt_dataset = Dataset.from_list(gpt_data)
+# Split dataset into train and validation
+train_data, val_data = train_test_split(data, test_size=0.2, random_state=42)
+train_dataset = Dataset.from_list(train_data)
+val_dataset = Dataset.from_list(val_data)
 
 # Tokenizer
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
+
 # Tokenization and label alignment
-label_map = {label: i for i, label in enumerate(LABEL_LIST)}
-
-
 def tokenize_and_align_labels(batch):
-    tokenized_inputs = tokenizer(batch["tokens"], truncation=True, is_split_into_words=True, padding="max_length")
+    tokenized_inputs = tokenizer(
+        batch["tokens"], truncation=True, is_split_into_words=True, padding="max_length"
+    )
     labels = []
     for i, label in enumerate(batch["ner_tags"]):
         word_ids = tokenized_inputs.word_ids(batch_index=i)
@@ -72,7 +70,7 @@ def tokenize_and_align_labels(batch):
         previous_word_idx = None
         for word_idx in word_ids:
             if word_idx is None or word_idx == previous_word_idx:
-                label_ids.append(-100)  # Ignore tokens not aligned with words
+                label_ids.append(-100)
             else:
                 label_ids.append(label_map[label[word_idx]])
             previous_word_idx = word_idx
@@ -82,16 +80,11 @@ def tokenize_and_align_labels(batch):
 
 
 # Tokenize datasets
-tokenized_einstein = einstein_dataset.map(tokenize_and_align_labels, batched=True)
-tokenized_gpt = gpt_dataset.map(tokenize_and_align_labels, batched=True)
+tokenized_train_dataset = train_dataset.map(tokenize_and_align_labels, batched=True)
+tokenized_val_dataset = val_dataset.map(tokenize_and_align_labels, batched=True)
 
-# Combine datasets into a DatasetDict
-dataset = DatasetDict(
-    {
-        "train": tokenized_einstein,
-        "validation": tokenized_gpt
-    }
-)
+# Combine datasets
+dataset = DatasetDict({"train": tokenized_train_dataset, "validation": tokenized_val_dataset})
 
 # Model
 model = AutoModelForTokenClassification.from_pretrained(MODEL_NAME, num_labels=NUM_LABELS).to("cuda")
@@ -108,11 +101,10 @@ training_args = TrainingArguments(
     save_strategy="epoch",
     logging_dir='./logs',
     logging_steps=10,
-    report_to=None,  # Disable external logging
+    report_to=None,
 )
 
 # Data collator
-
 data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
 # Trainer
@@ -121,7 +113,8 @@ trainer = Trainer(
     args=training_args,
     train_dataset=dataset["train"],
     eval_dataset=dataset["validation"],
-    data_collator=data_collator
+    data_collator=data_collator,
+    tokenizer=tokenizer
 )
 
 # Train the model
