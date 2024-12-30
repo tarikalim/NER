@@ -42,7 +42,7 @@ Run the script to train the model and execute the pipeline:
 
 ### Output
 
-- After running the script, the model's predictions will be saved in the `output.json` file which located in the "ner" directory.
+- After running the script, the model's predictions will be saved in the `output.json` file which located in the `ner` directory.
 
 ---
 
