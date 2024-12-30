@@ -1,9 +1,11 @@
 import json
+import os
 from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = "./trained_model"
-INPUT_FILE = "ner/input.txt"
-OUTPUT_FILE = "ner/output.json"
+INPUT_FILE = os.path.join(BASE_DIR, "input.txt")
+OUTPUT_FILE = os.path.join(BASE_DIR, "output.json")
 
 # To convert hugging face label indexes to our labels. It makes reading easier
 LABEL_LIST = [

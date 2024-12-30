@@ -1,4 +1,6 @@
 import json
+import os
+
 from datasets import Dataset
 from sklearn.model_selection import train_test_split
 from transformers import (
@@ -10,6 +12,7 @@ from transformers import (
 )
 import torch
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_NAME = "bert-base-uncased"
 OUTPUT_DIR = "./trained_model"
 NUM_EPOCHS = 5
@@ -46,7 +49,7 @@ def load_ner_dataset(file_path):
 
 
 # Paths to datasets
-dataset_path = "ner/dataset/dataset.json"
+dataset_path = os.path.join(BASE_DIR, "dataset/dataset.json")
 data = load_ner_dataset(dataset_path)
 
 # Split dataset into train and validation,
