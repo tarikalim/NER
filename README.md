@@ -1,7 +1,7 @@
 # Named Entity Recognition (NER) using BERT
 
 
-This project trains a **BERT model** for Named Entity Recognition (NER) using a dataset generated in NLP lecture project 1.
+This project provide a pipeline for train and use **BERT model** for Named Entity Recognition (NER) using a dataset generated in NLP class project1.
 
 ---
 
@@ -28,8 +28,8 @@ Run the script to train the model and execute the pipeline:
 ## Important Note
 
 - The model is trained on **GPU**, you must specify the pytorch version according to your system,
-  requirements.txt file doesn't include pytorch file! When you run the script, it will ask you the cuda version.
-  You can also use cpu to train model, script will give you to select cpu option at the begining.
+  requirements.txt file doesn't include pytorch version! When you run the script, it will ask you the cuda version.
+  You can also use cpu to train model, script will ask you.
 
 ---
 
