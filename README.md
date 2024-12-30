@@ -1,12 +1,9 @@
-# Named Entity Recognition (NER) using BERT
+# Named Entity Recognition Pipeline
 
-## Project Summary
-
-This project trains a **BERT model** for Named Entity Recognition (NER) using a dataset generated in NLP lecture project
+This project trains a **BERT model** for Named Entity Recognition (NER) using a dataset generated for NLP class project 1.
 
 ---
-
-## Usage
+## Instructions
 
 ### Step 1: Give Permissions to the Script
 
@@ -29,34 +26,17 @@ Run the script to train the model and execute the pipeline:
 ## Important Note
 
 - The model is trained on **GPU**, you must specify the pytorch version according to your system,
-  requirements.txt file doesn't include pytorch file! When you run the script, it will ask you the cuda version
+  requirements.txt file doesn't include pytorch file! When you run the script, it will ask you the cuda version.
 
 ---
 
 ## Input and Output
 
 ### Input
-
 - The input sentences for NER are provided in the `input.txt` file (one sentence per line).
-- You can edit the `input.txt` file to include your own sentences for testing.
-
 ### Output
-
 - After running the script, the model's predictions will be saved in the `output.json` file.
-
+  
 ---
 
-## Workflow Steps
-
-1. **Train the Model**:
-    - The script trains the BERT model using the dataset located in the `dataset` directory.
-
-2. **Run the Pipeline**:
-    - Once training is complete, the `pipeline.py` script processes the sentences in `input.txt` and generates
-      predictions.
-
-3. **View Results**:
-    - The results are saved in the `output.json` file, showing the sentences and their corresponding NER predictions.
-
----
 
