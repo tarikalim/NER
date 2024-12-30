@@ -46,7 +46,7 @@ def load_ner_dataset(file_path):
 
 
 # Paths to datasets
-dataset_path = "dataset/dataset.json"
+dataset_path = "ner/dataset/dataset.json"
 data = load_ner_dataset(dataset_path)
 
 # Split dataset into train and validation,

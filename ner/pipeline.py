@@ -2,8 +2,8 @@ import json
 from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
 
 MODEL_DIR = "./trained_model"
-INPUT_FILE = "input.txt"
-OUTPUT_FILE = "output.json"
+INPUT_FILE = "ner/input.txt"
+OUTPUT_FILE = "ner/output.json"
 
 # To convert hugging face label indexes to our labels. It makes reading easier
 LABEL_LIST = [
